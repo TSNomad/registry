@@ -1,0 +1,237 @@
+/**
+ * TSNomad Registry
+ *
+ * Generic registry for managing collections with lazy loading.
+ * Items are set as factories and only instantiated when first accessed.
+ *
+ * Usage:
+ * ```typescript
+ * const strategies = new Registry<AiStrategy>();
+ *
+ * strategies.set('claude', () => new ClaudeStrategy());
+ * strategies.set('aider', () => new AiderStrategy(), { priority: 10 });
+ *
+ * const claude = await strategies.get('claude');
+ * const all = await strategies.getAll();
+ * ```
+ */
+
+import type { ItemFactory, ItemMetadata } from './types.js';
+import { KeyNotFoundError, DuplicateKeyError } from './errors.js';
+
+/**
+ * Internal entry stored in the registry.
+ */
+interface RegistryEntry<T> {
+  factory: ItemFactory<T>;
+  instance: T | null;
+  metadata: ItemMetadata;
+}
+
+/**
+ * Generic registry with lazy loading support.
+ */
+export class Registry<T> {
+  /**
+   * Registered entries keyed by name.
+   */
+  private entries = new Map<string, RegistryEntry<T>>();
+
+  /**
+   * Sets an item factory in the registry.
+   * The item is not instantiated until first access.
+   *
+   * @param key - Unique identifier for this item
+   * @param factory - Function that creates the item
+   * @param metadata - Optional metadata for filtering/sorting
+   * @throws DuplicateKeyError if key is already set
+   */
+  set(
+    key: string,
+    factory: ItemFactory<T>,
+    metadata: ItemMetadata = {}
+  ): void {
+    if (this.entries.has(key)) {
+      throw new DuplicateKeyError(key);
+    }
+
+    this.entries.set(key, {
+      factory,
+      instance: null,
+      metadata,
+    });
+  }
+
+  /**
+   * Replaces an existing entry.
+   * Clears any cached instance.
+   *
+   * @param key - Unique identifier for this item
+   * @param factory - Function that creates the item
+   * @param metadata - Optional metadata for filtering/sorting
+   */
+  replace(
+    key: string,
+    factory: ItemFactory<T>,
+    metadata: ItemMetadata = {}
+  ): void {
+    this.entries.set(key, {
+      factory,
+      instance: null,
+      metadata,
+    });
+  }
+
+  /**
+   * Gets an item by key, instantiating it if needed.
+   *
+   * @param key - The item key
+   * @returns Promise resolving to the item
+   * @throws KeyNotFoundError if key is not set
+   */
+  async get(key: string): Promise<T> {
+    const entry = this.entries.get(key);
+
+    if (!entry) {
+      throw new KeyNotFoundError(key, this.keys());
+    }
+
+    // Return cached instance if available
+    if (entry.instance !== null) {
+      return entry.instance;
+    }
+
+    // Instantiate and cache
+    const instance = await entry.factory();
+    entry.instance = instance;
+
+    return instance;
+  }
+
+  /**
+   * Checks if a key is set.
+   *
+   * @param key - The key to check
+   * @returns True if set
+   */
+  has(key: string): boolean {
+    return this.entries.has(key);
+  }
+
+  /**
+   * Gets all set keys.
+   *
+   * @returns Array of key strings
+   */
+  keys(): string[] {
+    return Array.from(this.entries.keys());
+  }
+
+  /**
+   * Gets metadata for a key without instantiating.
+   *
+   * @param key - The key to look up
+   * @returns Metadata or undefined if not set
+   */
+  getMetadata(key: string): ItemMetadata | undefined {
+    return this.entries.get(key)?.metadata;
+  }
+
+  /**
+   * Gets all items, instantiating any that haven't been accessed.
+   *
+   * @returns Promise resolving to array of all items
+   */
+  async getAll(): Promise<T[]> {
+    const items: T[] = [];
+
+    for (const key of this.keys()) {
+      items.push(await this.get(key));
+    }
+
+    return items;
+  }
+
+  /**
+   * Gets all items as key-value pairs.
+   *
+   * @returns Promise resolving to Record of key to item
+   */
+  async getAllEntries(): Promise<Record<string, T>> {
+    const result: Record<string, T> = {};
+
+    for (const key of this.keys()) {
+      result[key] = await this.get(key);
+    }
+
+    return result;
+  }
+
+  /**
+   * Finds keys matching a metadata filter.
+   *
+   * @param filter - Function that returns true for matching metadata
+   * @returns Array of matching keys
+   */
+  findByMetadata(filter: (meta: ItemMetadata) => boolean): string[] {
+    const matches: string[] = [];
+
+    for (const [key, entry] of this.entries) {
+      if (filter(entry.metadata)) {
+        matches.push(key);
+      }
+    }
+
+    return matches;
+  }
+
+  /**
+   * Finds keys by tag.
+   *
+   * @param tag - Tag to search for
+   * @returns Array of keys that have this tag
+   */
+  findByTag(tag: string): string[] {
+    return this.findByMetadata((meta) => meta.tags?.includes(tag) ?? false);
+  }
+
+  /**
+   * Gets keys sorted by priority (highest first).
+   *
+   * @returns Array of keys sorted by priority
+   */
+  keysByPriority(): string[] {
+    const entries = Array.from(this.entries.entries());
+
+    entries.sort((a, b) => {
+      const priorityA = a[1].metadata.priority ?? 0;
+      const priorityB = b[1].metadata.priority ?? 0;
+      return priorityB - priorityA;
+    });
+
+    return entries.map(([key]) => key);
+  }
+
+  /**
+   * Deletes an entry and its cached instance.
+   *
+   * @param key - The key to delete
+   */
+  delete(key: string): void {
+    this.entries.delete(key);
+  }
+
+  /**
+   * Clears all entries and instances.
+   */
+  clear(): void {
+    this.entries.clear();
+  }
+
+  /**
+   * Gets the number of set items.
+   */
+  get size(): number {
+    return this.entries.size;
+  }
+}
