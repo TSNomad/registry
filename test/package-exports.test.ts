@@ -23,7 +23,7 @@ test('the package root exports the registry and its errors', () => {
   assert.deepEqual(reader.getKeys(), []);
 });
 
-test.skip('the package root and the errors entry export ReentrantGetError, a RegistryError', async () => {
+test('the package root and the errors entry export ReentrantGetError, a RegistryError', async () => {
   const errors = await import('@tsnomad/registry/errors');
   assert.ok('ReentrantGetError' in registry, 'ReentrantGetError is not exported from the root');
   assert.ok('ReentrantGetError' in errors, 'ReentrantGetError is not exported from the errors entry');

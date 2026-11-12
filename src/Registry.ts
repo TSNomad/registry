@@ -16,11 +16,12 @@
  * ```
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { ItemFactory, ItemMetadata } from './types.js';
 import type { CanGet } from './CanGet.js';
 import type { CanSet } from './CanSet.js';
 import type { CanDelete } from './CanDelete.js';
-import { KeyNotFoundError, DuplicateKeyError } from './errors.js';
+import { KeyNotFoundError, DuplicateKeyError, ReentrantGetError } from './errors.js';
 
 /**
  * Internal entry stored in the registry.
@@ -42,6 +43,20 @@ interface RegistryEntry<T> {
 }
 
 /**
+ * One factory run, as the run context sees it. A get made while a run
+ * is in flight sees that run's frame, and the frames of the runs that
+ * led to it through `parent`.
+ */
+interface RunFrame {
+  /** The key whose factory this run builds. */
+  readonly key: string;
+  /** The run whose factory made the get that started this run, if any. */
+  readonly parent: RunFrame | undefined;
+  /** True once the run has settled, either way. */
+  settled: boolean;
+}
+
+/**
  * Generic registry with lazy loading support, implementing PHPNomad's
  * `CanGet`, `CanSet` and `CanDelete`. Metadata, tags and priority are
  * TS Nomad additions.
@@ -51,6 +66,13 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    * Registered entries keyed by name.
    */
   private entries = new Map<string, RegistryEntry<T>>();
+
+  /**
+   * The run each factory call belongs to. One store per registry, so a
+   * run in one registry never makes a get of another registry
+   * re-entrant.
+   */
+  private readonly runs = new AsyncLocalStorage<RunFrame>();
 
   /**
    * Sets an item factory in the registry.
@@ -114,8 +136,17 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    *   `delete` or `clear` removes that entry while the run is in
    *   flight, its result is never stored on a later entry under the
    *   same key, and a get after the removal runs the new entry's factory.
-   * - A factory must not get its own key, directly or through another
-   *   key's factory. That get waits on its own run and never settles.
+   * - A get of a key made inside a run of that key's factory, while
+   *   the run is in flight, rejects with a `ReentrantGetError`. That
+   *   covers a factory that gets its own key, a cycle through other
+   *   keys' factories, and a factory that replaced its own key and then
+   *   gets it. The error carries the key and the path of keys from the
+   *   outermost run in flight to the re-entrant get, such as
+   *   `['a', 'b', 'a']`. The run fails with that error and caches
+   *   nothing. A get from work the factory started, made after its run
+   *   settled, is not re-entrant. The check runs before the key is
+   *   looked up, so a factory that deleted its own key gets this error
+   *   too, not `KeyNotFoundError`.
    *
    * Each entry object keeps its own run and its own built flag.
    * `set` and `replace` store a new entry object, and `delete` and
@@ -124,9 +155,16 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    *
    * @param key - The item key
    * @returns Promise resolving to the item
+   * @throws ReentrantGetError if the get comes from inside a run of
+   *   the key's own factory
    * @throws KeyNotFoundError if key is not set
    */
   async get(key: string): Promise<T> {
+    const path = this.reentrantPath(key);
+    if (path) {
+      throw new ReentrantGetError(key, path);
+    }
+
     const entry = this.entries.get(key);
 
     if (!entry) {
@@ -138,7 +176,7 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
     }
 
     if (!entry.pending) {
-      entry.pending = this.build(entry);
+      entry.pending = this.build(entry, key);
     }
 
     return entry.pending;
@@ -150,27 +188,64 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    * stores nothing and clears the run, so the next get starts a new one.
    * A factory that throws synchronously rejects like one that rejects.
    *
+   * The factory runs inside a frame of the registry's run context, which
+   * follows it across `await`, timers and any work it starts. The frame
+   * names the key and links to the run, if any, whose factory made the
+   * get that started this one. The frame is marked settled when the run
+   * settles, on success and on failure, so a get from the factory's
+   * later work is not re-entrant. A get of the key while the frame is in
+   * flight rejects with `ReentrantGetError`, as the `get` rules say, and
+   * the run fails with that error.
+   *
    * The factory starts one microtask after `get` stores this run on the
-   * entry. A factory that gets its own key synchronously then finds the
-   * run in flight and waits on it, as the `get` rules say, instead of
-   * starting another run.
+   * entry, so a get that arrives before the factory starts shares the
+   * run.
    *
    * @param entry - The entry that owns this run
+   * @param key - The key the entry is stored under
    * @returns Promise resolving to the item
    */
-  private build(entry: RegistryEntry<T>): Promise<T> {
-    return Promise.resolve().then(() => entry.factory()).then(
+  private build(entry: RegistryEntry<T>, key: string): Promise<T> {
+    const frame: RunFrame = { key, parent: this.runs.getStore(), settled: false };
+    return Promise.resolve().then(() => this.runs.run(frame, () => entry.factory())).then(
       (item) => {
+        frame.settled = true;
         entry.instance = item;
         entry.built = true;
         entry.pending = undefined;
         return item;
       },
       (error: unknown) => {
+        frame.settled = true;
         entry.pending = undefined;
         throw error;
       }
     );
+  }
+
+  /**
+   * The path of a re-entrant get of `key`, or undefined when the get is
+   * not re-entrant. A get is re-entrant when a run of `key`'s factory
+   * that has not settled is the run the get comes from, or one of the
+   * runs that led to it. The path lists the key of every run in flight
+   * along that chain, from the outermost, and ends with `key`.
+   *
+   * @param key - The key being got
+   * @returns The path, such as ['a', 'b', 'a'], or undefined
+   */
+  private reentrantPath(key: string): string[] | undefined {
+    const inFlight: string[] = [];
+    let reentrant = false;
+    for (let frame = this.runs.getStore(); frame; frame = frame.parent) {
+      if (frame.settled) {
+        continue;
+      }
+      inFlight.unshift(frame.key);
+      if (frame.key === key) {
+        reentrant = true;
+      }
+    }
+    return reentrant ? [...inFlight, key] : undefined;
   }
 
   /**

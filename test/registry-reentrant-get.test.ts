@@ -57,7 +57,7 @@ function assertReentrant(error: unknown, key: string, path: string[], label = ke
   }
 }
 
-test.skip('a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run', async () => {
+test('a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run', async () => {
   const registry = new Registry<string>();
   let runs = 0;
   const factory = async (): Promise<string> => {
@@ -81,7 +81,7 @@ test.skip('a factory that replaces its own key and then gets it rejects with a R
   assert.equal(await registry.get('loop'), 'built');
 });
 
-test.skip('a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run', async () => {
+test('a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run', async () => {
   const factories: Array<[string, (registry: Registry<string>) => () => string | Promise<string>]> = [
     ['synchronously', (registry) => () => registry.get('self')],
     ['after an await', (registry) => async () => {
@@ -109,7 +109,7 @@ test.skip('a factory that gets its own key rejects with a ReentrantGetError inst
   }
 });
 
-test.skip("a cycle through another key's factory rejects with a ReentrantGetError naming the path", async () => {
+test("a cycle through another key's factory rejects with a ReentrantGetError naming the path", async () => {
   const registry = new Registry<string>();
   registry.set('a', async () => `a+${await registry.get('b')}`);
   registry.set('b', async () => `b+${await registry.get('a')}`);

@@ -11,4 +11,4 @@ export type { ItemFactory, ItemMetadata } from './types.js';
 export type { CanGet } from './CanGet.js';
 export type { CanSet } from './CanSet.js';
 export type { CanDelete } from './CanDelete.js';
-export { RegistryError, KeyNotFoundError, DuplicateKeyError } from './errors.js';
+export { RegistryError, KeyNotFoundError, DuplicateKeyError, ReentrantGetError } from './errors.js';

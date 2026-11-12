@@ -59,3 +59,29 @@ python3 docs/architecture/ncc-slice-7-proof/mutate.py . docs/architecture/ncc-sl
   test that pins the old wait is removed, as P5 does. Each of the 10
   mutations breaks one part of the rule, its error, or its export, and
   each is caught.
+
+## P5, the implementation
+
+- `p5-mutations.py` and `p5-mutations.log`: packet P5's list, 25
+  entries, three of them controls, against the committed rule, its
+  error and its export. Each P5 entry breaks one part of the rule, the
+  path, or the error, and the U entries guard the P5 unit tests in
+  `test/registry-build.test.ts`: when the factory starts, one run
+  context per registry, and where the check sits in `get`. It reruns
+  on this branch:
+
+```
+python3 docs/architecture/ncc-slice-7-proof/mutate.py . docs/architecture/ncc-slice-7-proof/p5-mutations.py
+```
+
+- P5 gives `build` the key and a run frame, which moved the find text
+  of five entries in `p2-mutations.py` (G1, G3, G4, G6, U1), one in
+  `review-fix-mutations.py` (F1 and its controls) and two in
+  `review-spot-mutations.py` (S4, S5). Each now matches the new code
+  and breaks the same guard. G4 no longer looks the key up, since
+  `build` receives it. The reruns on the P5 code,
+  `p2-mutations.p5-rerun.log`, `review-fix-mutations.p5-rerun.log` and
+  `review-spot-mutations.p5-rerun.log`, each end with zero mismatches.
+- P5 replaced P2's second unit test, which pinned the old wait. F1 is
+  now caught by the P5 unit test that pins the factory starting one
+  microtask after `get` stores its run.
