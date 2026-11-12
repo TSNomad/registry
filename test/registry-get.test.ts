@@ -15,18 +15,26 @@ import { KeyNotFoundError } from '../dist/errors.js';
 
 const tick = (ms = 5): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** A factory whose runs are counted and that settles when told to. */
+/**
+ * A factory whose runs are counted and that settles when told to.
+ * `release` and `fail` settle every run so far, so code that runs the
+ * factory more than once fails an assertion instead of hanging.
+ */
 function gated<T>(answer: () => T) {
-  const state: { runs: number; release: () => void; fail: (error: unknown) => void } = {
+  const pending: Array<{ resolve: (value: T) => void; reject: (error: unknown) => void }> = [];
+  const state = {
     runs: 0,
-    release: () => {},
-    fail: () => {},
+    release: () => {
+      for (const run of pending.splice(0)) run.resolve(answer());
+    },
+    fail: (error: unknown) => {
+      for (const run of pending.splice(0)) run.reject(error);
+    },
   };
   const factory = () => {
     state.runs += 1;
     return new Promise<T>((resolve, reject) => {
-      state.release = () => resolve(answer());
-      state.fail = reject;
+      pending.push({ resolve, reject });
     });
   };
   return { state, factory };
@@ -73,7 +81,7 @@ test.skip('a factory that answers null or undefined runs once, and the answer is
   }
 });
 
-test.skip('a factory that throws caches nothing, and the next get runs it again', async () => {
+test('a factory that throws caches nothing, and the next get runs it again', async () => {
   const registry = new Registry<string>();
   let runs = 0;
   registry.set('flaky', async () => {
@@ -105,7 +113,7 @@ test.skip('every get waiting on a failed run gets its error, and the run is not 
   assert.equal(state.runs, 1);
 });
 
-test.skip('replace during a run: the old run never lands on the new entry, and the next get runs the new factory', async () => {
+test('replace during a run: the old run never lands on the new entry, and the next get runs the new factory', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);
@@ -120,7 +128,7 @@ test.skip('replace during a run: the old run never lands on the new entry, and t
   assert.equal(state.runs, 1);
 });
 
-test.skip('delete during a run: the run never lands on an entry set later under the same key', async () => {
+test('delete during a run: the run never lands on an entry set later under the same key', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);
@@ -135,7 +143,7 @@ test.skip('delete during a run: the run never lands on an entry set later under 
   assert.equal(await registry.get('claude'), 'fresh');
 });
 
-test.skip('clear during a run: the run never lands on an entry set later under the same key', async () => {
+test('clear during a run: the run never lands on an entry set later under the same key', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);
@@ -150,7 +158,7 @@ test.skip('clear during a run: the run never lands on an entry set later under t
   assert.equal(await registry.get('claude'), 'fresh');
 });
 
-test.skip('a get that started before replace and fails does not stop the new entry from building', async () => {
+test('a get that started before replace and fails does not stop the new entry from building', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'never');
   registry.set('claude', factory);

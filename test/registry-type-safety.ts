@@ -20,7 +20,7 @@ export function registryChecks(registry: Registry<Strategy>): void {
 
   writer.set('claude', () => ({ run: () => 'c' }));
   writer.set('codex', async () => ({ run: () => 'x' }));
-  void reader.get('claude').then((strategy) => strategy.run());
+  void reader.get('claude').then((strategy: Strategy) => strategy.run());
   const keys: string[] = reader.getKeys();
   void keys;
   deleter.delete('claude');

@@ -25,6 +25,19 @@ strategies.set('claude', () => new ClaudeStrategy());
 const claude = await strategies.get('claude');
 ```
 
+## Where this differs from PHPNomad
+
+`Registry` implements PHPNomad's `CanGet`, `CanSet` and `CanDelete`,
+with these differences:
+
+- `get` and `getAll` return promises, because a factory may be async.
+- `get` of a missing id throws `KeyNotFoundError`. PHPNomad answers
+  null.
+- `set` of an id already set throws `DuplicateKeyError`. PHPNomad
+  overwrites. Use `replace` to overwrite.
+- `getAll` answers the items in key order. `getAllEntries` answers the
+  record keyed by id, as PHPNomad's `getAll` does.
+
 ## Extracted 2026-09-17
 
 This package was extracted on 2026-09-17 from a prototype carried inside
