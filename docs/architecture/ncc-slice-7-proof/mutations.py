@@ -23,4 +23,8 @@ MUTATIONS = [
   ('G8 getKeys in reverse order', R, KEYS, "  getKeys(): string[] {\n    return this.keys().reverse();\n  }", 'killed'),
   ('G9 getAll runs factories itself', R, "      items.push(await this.get(key));", "      items.push(await this.entries.get(key)!.factory());", 'killed'),
   ('G10 get rebuilds after a success', R, "    if (entry.built) {\n      return entry.instance as T;\n    }", "", 'killed'),
+  ('G11 getAllEntries runs factories itself', R, "      result[key] = await this.get(key);", "      result[key] = (await this.entries.get(key)!.factory()) as T;", 'killed'),
+  ('G12 getAll gets every key at once', R, "    for (const key of this.keys()) {\n      items.push(await this.get(key));\n    }", "    items.push(...(await Promise.all(this.keys().map((key) => this.get(key)))));", 'killed'),
+  ('G13 getAll skips a key deleted before its turn', R, "      items.push(await this.get(key));", "      if (this.has(key)) items.push(await this.get(key));", 'killed'),
+  ('G14 getAllEntries skips a failing key', R, "      result[key] = await this.get(key);", "      try { result[key] = await this.get(key); } catch { /* skipped */ }", 'killed'),
 ]

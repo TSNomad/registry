@@ -97,11 +97,13 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    *   again, as PHPNomad's registry marks an id initialized.
    * - A factory that throws or rejects caches nothing. Every get waiting
    *   on that run rejects with its error, and the next get runs the
-   *   factory again from the start.
+   *   factory again from the start. The registry never retries a
+   *   factory on its own. A caller that wants a retry limit or a
+   *   backoff owns that policy.
    * - A run belongs to the entry that started it. When `replace`,
    *   `delete` or `clear` removes that entry while the run is in
-   *   flight, its result never lands on a later entry under the same
-   *   key, and a get after the removal runs the new entry's factory.
+   *   flight, its result is never stored on a later entry under the
+   *   same key, and a get after the removal runs the new entry's factory.
    *
    * Stub: the body is 0.1's, which runs the factory again for
    * concurrent first gets and for a null item. Packet P2 brings it to
@@ -172,7 +174,13 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
   }
 
   /**
-   * Gets all items, instantiating any that haven't been accessed.
+   * Gets every item, in the order the keys were set, building any that
+   * have not been built.
+   *
+   * It reads the keys set when it starts, and gets them one at a time,
+   * in that order, through `get`, so it shares runs with gets in flight.
+   * It rejects with the error of the first key that fails. A key
+   * deleted before its turn rejects with `KeyNotFoundError`.
    *
    * @returns Promise resolving to array of all items
    */
@@ -187,7 +195,8 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
   }
 
   /**
-   * Gets all items as key-value pairs.
+   * Gets every item as a record keyed by id, as PHPNomad's `getAll`
+   * does. It reads and fails as `getAll` does.
    *
    * @returns Promise resolving to Record of key to item
    */

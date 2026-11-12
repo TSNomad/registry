@@ -13,7 +13,12 @@ import assert from 'node:assert/strict';
 import { Registry } from '../dist/Registry.js';
 import { KeyNotFoundError } from '../dist/errors.js';
 
-const tick = (ms = 5): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Waits until every pending promise job has run, so each get started
+ * above has reached its factory. No timer is involved: `setImmediate`
+ * runs after the microtask queue is empty.
+ */
+const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
 
 /**
  * A factory whose runs are counted and that settles when told to.
@@ -57,7 +62,7 @@ test.skip('concurrent first gets share one factory run and receive the same item
   registry.set('claude', factory);
 
   const both = Promise.all([registry.get('claude'), registry.get('claude'), registry.get('claude')]);
-  await tick();
+  await settle();
   state.release();
   const [a, b, c] = await both;
 
@@ -104,7 +109,7 @@ test.skip('every get waiting on a failed run gets its error, and the run is not 
   const boom = new Error('down');
 
   const waiting = [registry.get('flaky'), registry.get('flaky')];
-  await tick();
+  await settle();
   state.fail(boom);
 
   for (const get of waiting) {
@@ -119,7 +124,7 @@ test('replace during a run: the old run never lands on the new entry, and the ne
   registry.set('claude', factory);
 
   const inFlight = registry.get('claude');
-  await tick();
+  await settle();
   registry.replace('claude', () => 'new');
   state.release();
 
@@ -134,7 +139,7 @@ test('delete during a run: the run never lands on an entry set later under the s
   registry.set('claude', factory);
 
   const inFlight = registry.get('claude');
-  await tick();
+  await settle();
   registry.delete('claude');
   registry.set('claude', () => 'fresh');
   state.release();
@@ -149,7 +154,7 @@ test('clear during a run: the run never lands on an entry set later under the sa
   registry.set('claude', factory);
 
   const inFlight = registry.get('claude');
-  await tick();
+  await settle();
   registry.clear();
   registry.set('claude', () => 'fresh');
   state.release();
@@ -164,7 +169,7 @@ test('a get that started before replace and fails does not stop the new entry fr
   registry.set('claude', factory);
 
   const inFlight = registry.get('claude');
-  await tick();
+  await settle();
   registry.replace('claude', () => 'new');
   state.fail(new Error('old run failed'));
 
@@ -191,10 +196,59 @@ test.skip('getAll builds each item once, in the order keys were set, sharing run
 
   const single = registry.get('b');
   const all = registry.getAll();
-  await tick();
+  await settle();
   state.release();
 
   assert.deepEqual(await all, ['a', 'b']);
   assert.equal(await single, 'b');
   assert.equal(state.runs, 1);
+});
+
+test.skip('getAllEntries builds each item once, keyed by id, sharing runs with gets in flight', async () => {
+  const registry = new Registry<string>();
+  const { state, factory } = gated(() => 'b');
+  registry.set('a', () => 'a');
+  registry.set('b', factory);
+
+  const single = registry.get('b');
+  const entries = registry.getAllEntries();
+  await settle();
+  state.release();
+
+  assert.deepEqual(await entries, { a: 'a', b: 'b' });
+  assert.equal(await single, 'b');
+  assert.equal(state.runs, 1);
+});
+
+test('getAll and getAllEntries reject with the error of the first key whose factory fails, in key order', async () => {
+  const boom = new Error('b is down');
+  for (const read of ['getAll', 'getAllEntries'] as const) {
+    const registry = new Registry<string>();
+    registry.set('a', () => 'a');
+    registry.set('b', () => {
+      throw boom;
+    });
+    registry.set('c', () => {
+      throw new Error('c is down');
+    });
+
+    await assert.rejects(registry[read](), (error: unknown) => error === boom, read);
+  }
+});
+
+test('getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError', async () => {
+  for (const read of ['getAll', 'getAllEntries'] as const) {
+    const registry = new Registry<string>();
+    const { state, factory } = gated(() => 'a');
+    registry.set('a', factory);
+    registry.set('b', () => 'b');
+
+    const all = registry[read]();
+    await settle();
+    registry.delete('b');
+    registry.set('c', () => 'c');
+    state.release();
+
+    await assert.rejects(all, (error: unknown) => error instanceof KeyNotFoundError && error.key === 'b', read);
+  }
 });

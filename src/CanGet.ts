@@ -12,6 +12,11 @@
  * - PHPNomad's `getAll` answers an array keyed by id. Here `getAll`
  *   answers the items in key order, as 0.1 does, and the registry's
  *   `getAllEntries` answers the record keyed by id.
+ *
+ * Only the promises are forced by TypeScript. The other two keep 0.1
+ * behavior for current consumers and are open gaps under TS Nomad
+ * Alignment With PHPNomad (Charter 5012,
+ * https://navigator.novatori.us/r/charter/5012).
  */
 
 export interface CanGet<T> {

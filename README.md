@@ -38,6 +38,11 @@ with these differences:
 - `getAll` answers the items in key order. `getAllEntries` answers the
   record keyed by id, as PHPNomad's `getAll` does.
 
+Only the promises are forced by TypeScript. The other three keep 0.1
+behavior for current consumers and are open gaps under
+[TS Nomad Alignment With PHPNomad (Charter 5012)](https://navigator.novatori.us/r/charter/5012),
+to close in a breaking release.
+
 ## Extracted 2026-09-17
 
 This package was extracted on 2026-09-17 from a prototype carried inside

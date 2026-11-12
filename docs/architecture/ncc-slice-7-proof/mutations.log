@@ -8,8 +8,11 @@ C1-must-catch: get answers undefined: KILLED exit=1 expect=killed OK
     ✖ clear during a run: the run never lands on an entry set later under the same key
     ✖ delete during a run: the run never lands on an entry set later under the same key
     ✖ every get waiting on a failed run gets its error, and the run is not repeated for them
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+    ✖ getAll and getAllEntries reject with the error of the first key whose factory fails, in key order
     ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
     ✖ getAllEntries answers the record keyed by id, as PHPNomad getAll does
+    ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
     ✖ replace during a run: the old run never lands on the new entry, and the next get runs the new factory
     ✖ setting a key twice throws DuplicateKeyError, and replace replaces on purpose
     ✖ the factory does not run until the key is read, and runs once for later reads
@@ -19,6 +22,7 @@ G1 concurrent first gets each run the factory: KILLED exit=1 expect=killed OK
     ✖ concurrent first gets share one factory run and receive the same item
     ✖ every get waiting on a failed run gets its error, and the run is not repeated for them
     ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
+    ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
 G2 null and undefined not cached (0.1): KILLED exit=1 expect=killed OK
     ✖ a factory that answers null or undefined runs once, and the answer is served after
 G3 a rejection stays cached: KILLED exit=1 expect=killed OK
@@ -39,8 +43,19 @@ G7 getKeys answers nothing: KILLED exit=1 expect=killed OK
 G8 getKeys in reverse order: KILLED exit=1 expect=killed OK
     ✖ getKeys lists every key in the order it was set, as keys() does
 G9 getAll runs factories itself: KILLED exit=1 expect=killed OK
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
     ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
 G10 get rebuilds after a success: KILLED exit=1 expect=killed OK
     ✖ a factory that answers null or undefined runs once, and the answer is served after
     ✖ the factory does not run until the key is read, and runs once for later reads
+G11 getAllEntries runs factories itself: KILLED exit=1 expect=killed OK
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+    ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
+G12 getAll gets every key at once: KILLED exit=1 expect=killed OK
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+G13 getAll skips a key deleted before its turn: KILLED exit=1 expect=killed OK
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+G14 getAllEntries skips a failing key: KILLED exit=1 expect=killed OK
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+    ✖ getAll and getAllEntries reject with the error of the first key whose factory fails, in key order
 mismatches=0
