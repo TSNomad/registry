@@ -17,6 +17,9 @@
  */
 
 import type { ItemFactory, ItemMetadata } from './types.js';
+import type { CanGet } from './CanGet.js';
+import type { CanSet } from './CanSet.js';
+import type { CanDelete } from './CanDelete.js';
 import { KeyNotFoundError, DuplicateKeyError } from './errors.js';
 
 /**
@@ -29,9 +32,11 @@ interface RegistryEntry<T> {
 }
 
 /**
- * Generic registry with lazy loading support.
+ * Generic registry with lazy loading support, implementing PHPNomad's
+ * `CanGet`, `CanSet` and `CanDelete`. Metadata, tags and priority are
+ * TS Nomad additions.
  */
-export class Registry<T> {
+export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
   /**
    * Registered entries keyed by name.
    */
@@ -83,7 +88,24 @@ export class Registry<T> {
   }
 
   /**
-   * Gets an item by key, instantiating it if needed.
+   * Gets an item by key, building it from its factory the first time.
+   *
+   * - The factory runs once per entry. Concurrent first gets of one key
+   *   share that one run and receive the same item.
+   * - Whatever the factory answers is the item, null and undefined
+   *   included, and later gets serve it without running the factory
+   *   again, as PHPNomad's registry marks an id initialized.
+   * - A factory that throws or rejects caches nothing. Every get waiting
+   *   on that run rejects with its error, and the next get runs the
+   *   factory again from the start.
+   * - A run belongs to the entry that started it. When `replace`,
+   *   `delete` or `clear` removes that entry while the run is in
+   *   flight, its result never lands on a later entry under the same
+   *   key, and a get after the removal runs the new entry's factory.
+   *
+   * Stub: the body is 0.1's, which runs the factory again for
+   * concurrent first gets and for a null item. Packet P2 brings it to
+   * the contract above.
    *
    * @param key - The item key
    * @returns Promise resolving to the item
@@ -125,6 +147,18 @@ export class Registry<T> {
    */
   keys(): string[] {
     return Array.from(this.entries.keys());
+  }
+
+  /**
+   * Gets every key, in the order they were set. PHPNomad's name for
+   * `keys()`.
+   *
+   * Stub: packet P2 implements it.
+   *
+   * @returns Array of key strings
+   */
+  getKeys(): string[] {
+    return [];
   }
 
   /**
