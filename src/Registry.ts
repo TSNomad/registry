@@ -150,11 +150,16 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    * stores nothing and clears the run, so the next get starts a new one.
    * A factory that throws synchronously rejects like one that rejects.
    *
+   * The factory starts one microtask after `get` stores this run on the
+   * entry. A factory that gets its own key synchronously then finds the
+   * run in flight and waits on it, as the `get` rules say, instead of
+   * starting another run.
+   *
    * @param entry - The entry that owns this run
    * @returns Promise resolving to the item
    */
   private build(entry: RegistryEntry<T>): Promise<T> {
-    return (async () => entry.factory())().then(
+    return Promise.resolve().then(() => entry.factory()).then(
       (item) => {
         entry.instance = item;
         entry.built = true;
