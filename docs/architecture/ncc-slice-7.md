@@ -25,7 +25,8 @@ const claude = await strategies.get('claude');
 strategies.getKeys(); // ['claude']
 ```
 
-- `CanGet<T>`: `get(id)`, `getAll()` and the new `getKeys()`.
+- `CanGet<T>`: `get(id)`, `getAll()` and `getKeys()`, which PHPNomad's
+  `CanGet` has and the 0.1 registry lacked.
 - `CanSet<T>`: `set(id, factory)`.
 - `CanDelete`: `delete(id)`.
 
@@ -49,6 +50,10 @@ keeps the registry free of a container dependency.
 - A run belongs to the entry that started it. When `replace`, `delete`
   or `clear` removes the entry mid-run, the result is never stored on
   a later entry under the same key.
+- A factory must not get its own key, directly or through another
+  key's factory. That get waits on the run it belongs to, which never
+  settles. Build dependency graphs in the container, which detects
+  loops, and keep registry factories to one item each.
 
 `getAll()` and `getAllEntries()` read the keys set when they start
 and get them one at a time, in key order, through `get`. They share
@@ -68,13 +73,21 @@ TypeScript forces one difference:
 Three more keep 0.1 behavior that the current consumers rely on.
 TypeScript does not force them, so they are open gaps under
 [TS Nomad Alignment With PHPNomad (Charter 5012)](https://navigator.novatori.us/r/charter/5012).
-Closing them breaks those consumers, which needs the version bump this
-build defers to the merge to main.
+The loader's breaks in this slice fail loudly, at compile time or with
+an error at load. Closing these three would break consumers without a
+sound: `get` would answer null where they expect an item or an error,
+and `set` would replace an item where they expect a refusal. Charter
+5012 sends a consumer break to Alex, so these wait for his call.
 
 - `get` of a missing id throws `KeyNotFoundError`. PHPNomad answers
   null.
 - `set` of an id already set throws `DuplicateKeyError`. PHPNomad
-  overwrites. `replace` overwrites on purpose.
+  overwrites, though only before the first read. Its `WithGet` keeps an
+  initialized flag that `set` and `delete` never clear, so after a read
+  a new `set` makes `get` answer the stored closure. Closing this gap
+  copies the intent, not that bug, which is filed as
+  [Conversation 11037](https://navigator.novatori.us/r/conversation/11037).
+  `replace` overwrites on purpose.
 - `getAll` answers an array in key order. PHPNomad answers an array
   keyed by id, which `getAllEntries()` gives here.
 

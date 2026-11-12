@@ -118,7 +118,7 @@ test.skip('every get waiting on a failed run gets its error, and the run is not 
   assert.equal(state.runs, 1);
 });
 
-test('replace during a run: the old run never lands on the new entry, and the next get runs the new factory', async () => {
+test('replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);
@@ -133,7 +133,7 @@ test('replace during a run: the old run never lands on the new entry, and the ne
   assert.equal(state.runs, 1);
 });
 
-test('delete during a run: the run never lands on an entry set later under the same key', async () => {
+test('delete during a run: the run never stores its result on an entry set later under the same key', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);
@@ -148,7 +148,7 @@ test('delete during a run: the run never lands on an entry set later under the s
   assert.equal(await registry.get('claude'), 'fresh');
 });
 
-test('clear during a run: the run never lands on an entry set later under the same key', async () => {
+test('clear during a run: the run never stores its result on an entry set later under the same key', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'old');
   registry.set('claude', factory);

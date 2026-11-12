@@ -12,7 +12,7 @@ MUTATIONS = [
   ('G1 concurrent first gets each run the factory', R, "    if (!entry.pending) {", "    {", 'killed'),
   ('G2 null and undefined not cached (0.1)', R, "    if (entry.built) {", "    if (entry.instance !== null && entry.instance !== undefined) {", 'killed'),
   ('G3 a rejection stays cached', R, "        (error) => {\n          entry.pending = undefined;\n          throw error;", "        (error) => {\n          throw error;", 'killed'),
-  ('G4 a run lands on whatever entry holds the key now', R,
+  ('G4 a run stores its result on whatever entry holds the key now', R,
    "          entry.instance = value;\n          entry.built = true;",
    "          const live = this.entries.get(key) ?? entry;\n          live.instance = value;\n          live.built = true;", 'killed'),
   ('G5 replace keeps the old run', R,

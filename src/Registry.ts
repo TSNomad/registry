@@ -104,6 +104,8 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    *   `delete` or `clear` removes that entry while the run is in
    *   flight, its result is never stored on a later entry under the
    *   same key, and a get after the removal runs the new entry's factory.
+   * - A factory must not get its own key, directly or through another
+   *   key's factory. That get waits on its own run and never settles.
    *
    * Stub: the body is 0.1's, which runs the factory again for
    * concurrent first gets and for a null item. Packet P2 brings it to

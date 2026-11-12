@@ -5,15 +5,15 @@ C1-must-catch: get answers undefined: KILLED exit=1 expect=killed OK
     ✖ a factory that throws caches nothing, and the next get runs it again
     ✖ a get that started before replace and fails does not stop the new entry from building
     ✖ a value set through CanSet is read back through CanGet
-    ✖ clear during a run: the run never lands on an entry set later under the same key
-    ✖ delete during a run: the run never lands on an entry set later under the same key
+    ✖ clear during a run: the run never stores its result on an entry set later under the same key
+    ✖ delete during a run: the run never stores its result on an entry set later under the same key
     ✖ every get waiting on a failed run gets its error, and the run is not repeated for them
     ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
     ✖ getAll and getAllEntries reject with the error of the first key whose factory fails, in key order
     ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
     ✖ getAllEntries answers the record keyed by id, as PHPNomad getAll does
     ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
-    ✖ replace during a run: the old run never lands on the new entry, and the next get runs the new factory
+    ✖ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory
     ✖ setting a key twice throws DuplicateKeyError, and replace replaces on purpose
     ✖ the factory does not run until the key is read, and runs once for later reads
 C2-must-survive: comment only: SURVIVED exit=0 expect=survive OK
@@ -27,13 +27,13 @@ G2 null and undefined not cached (0.1): KILLED exit=1 expect=killed OK
     ✖ a factory that answers null or undefined runs once, and the answer is served after
 G3 a rejection stays cached: KILLED exit=1 expect=killed OK
     ✖ a factory that throws caches nothing, and the next get runs it again
-G4 a run lands on whatever entry holds the key now: KILLED exit=1 expect=killed OK
-    ✖ clear during a run: the run never lands on an entry set later under the same key
-    ✖ delete during a run: the run never lands on an entry set later under the same key
-    ✖ replace during a run: the old run never lands on the new entry, and the next get runs the new factory
+G4 a run stores its result on whatever entry holds the key now: KILLED exit=1 expect=killed OK
+    ✖ clear during a run: the run never stores its result on an entry set later under the same key
+    ✖ delete during a run: the run never stores its result on an entry set later under the same key
+    ✖ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory
 G5 replace keeps the old run: KILLED exit=1 expect=killed OK
     ✖ a get that started before replace and fails does not stop the new entry from building
-    ✖ replace during a run: the old run never lands on the new entry, and the next get runs the new factory
+    ✖ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory
 G6 a failed run retried inline for its waiters: KILLED exit=1 expect=killed OK
     ✖ a factory that throws caches nothing, and the next get runs it again
     ✖ a get that started before replace and fails does not stop the new entry from building
