@@ -1,0 +1,109 @@
+mutations in ncc-s07-b-registry, tests in ncc-s07-b-registry
+baseline exit=0
+C1-must-catch: the re-entrant check never throws: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+C2-must-survive: comment only: SURVIVED exit=0 expect=survive OK
+C3-must-refuse: syntax break: REFUSED (build failed: src/Registry.ts(244,8): error TS1109: Expression expected.)  expect=refuse
+P5-1 no frame ever matches its key: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-2 only the innermost run is checked, so a cycle through another key is missed: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-3 a settled run still counts, so later work the factory started is refused: KILLED exit=1 expect=killed OK
+    ✖ a get from work the factory started, made after its run settled, serves the item
+    ✖ a run that fails is marked settled, so a get from work its factory started runs the factory again
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+P5-4 factories run outside the run context: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-5 a run never marks itself settled on success: KILLED exit=1 expect=killed OK
+    ✖ a get from work the factory started, made after its run settled, serves the item
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+P5-6 a run never marks itself settled on failure: KILLED exit=1 expect=killed OK
+    ✖ a run that fails is marked settled, so a get from work its factory started runs the factory again
+P5-7 a run does not link to the run that started it: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-8 a run that fails on a re-entrant get caches undefined as the item: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-9 the path leaves out the runs that led back: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-10 the path lists the runs innermost first: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-11 the path does not end with the key got: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-12 the error is a KeyNotFoundError: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ a settled run in the chain drops out of the path, and the runs in flight before it still make a get re-entrant
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-13 the error names the outermost key, not the key got: KILLED exit=1 expect=killed OK
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-14 the error has another name: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-15 the error is not a RegistryError: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+    ✖ the package root and the errors entry export ReentrantGetError, a RegistryError
+P5-16 the message does not name the path: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ the path starts at the outermost run in flight and lists every run that led back to the key
+P5-17 the root does not export the error: KILLED exit=1 expect=killed OK
+    ✖ the package root and the errors entry export ReentrantGetError, a RegistryError
+U1 the factory starts inside get, before get stores the run: KILLED exit=1 expect=killed OK
+    ✖ a factory that throws synchronously rejects every concurrent get from one run, and the next get runs it again
+    ✖ a run that fails is marked settled, so a get from work its factory started runs the factory again
+    ✖ the factory starts one microtask after get stores its run, so a get made before it starts shares the run
+U2 the factory starts two microtasks after get stores the run: KILLED exit=1 expect=killed OK
+    ✖ the factory starts one microtask after get stores its run, so a get made before it starts shares the run
+U3 one run context shared by every registry: KILLED exit=1 expect=killed OK
+    ✖ a get of the same key in another registry, from inside a run, is not re-entrant
+U4 the check runs after the key lookup, so a deleted own key is KeyNotFoundError: KILLED exit=1 expect=killed OK
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+U5 the check runs after the built check, so a key built outside is served: KILLED exit=1 expect=killed OK
+    ✖ a factory that deleted its own key and then gets it rejects with a ReentrantGetError, not KeyNotFoundError
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+mismatches=0
