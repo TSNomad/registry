@@ -143,10 +143,13 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    *   gets it. The error carries the key and the path of keys from the
    *   outermost run in flight to the re-entrant get, such as
    *   `['a', 'b', 'a']`. The run fails with that error and caches
-   *   nothing. A get from work the factory started, made after its run
-   *   settled, is not re-entrant. The check runs before the key is
-   *   looked up, so a factory that deleted its own key gets this error
-   *   too, not `KeyNotFoundError`.
+   *   nothing. Work the factory starts counts as inside the run until
+   *   the run settles, so a get from a microtask the factory queued and
+   *   never awaited, made while the run is in flight, rejects as
+   *   re-entrant too. A get from work the factory started, made after
+   *   its run settled, is not re-entrant. The check runs before the key
+   *   is looked up, so a factory that deleted its own key gets this
+   *   error too, not `KeyNotFoundError`.
    *
    * Each entry object keeps its own run and its own built flag.
    * `set` and `replace` store a new entry object, and `delete` and

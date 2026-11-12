@@ -39,12 +39,12 @@ with these differences:
   record keyed by id, as PHPNomad's `getAll` does.
 - PHPNomad's registry is three traits over an array of objects. Here
   it is one `Registry<T>` class, and an item may be any type.
-- A factory must not read its own key. Until the pending re-entrant
-  rule lands, such a get waits forever, and a factory that replaces
-  its own key and then gets it loops and pins the CPU. With the rule,
-  each of these rejects with a `ReentrantGetError` that names the keys.
-  The rule uses `AsyncLocalStorage` from `node:async_hooks`, so the
-  registry then needs Node, Deno or Bun.
+- A factory must not read its own key, directly or through a cycle of
+  other keys' factories. Such a get rejects with a `ReentrantGetError`
+  that names the keys, and the run caches nothing. Work the factory
+  starts counts as inside the run until the run settles. The rule uses
+  `AsyncLocalStorage` from `node:async_hooks`, so the registry needs
+  Node, Deno or Bun.
 
 The promises and the one class are forced by TypeScript. The missing
 id, the duplicate set and the `getAll` shape keep 0.1 behavior for

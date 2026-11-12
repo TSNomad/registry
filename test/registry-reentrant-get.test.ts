@@ -6,12 +6,10 @@
  * `ReentrantGetError`, a `RegistryError` that names the key and the
  * path of keys that led back to it, and the run caches nothing.
  *
- * Before this rule, a self-get waited on its own run and never settled,
- * and the self-replacing factory looped through microtasks and pinned
- * the CPU. The tests that pin the rule carry `skip` until packet P5
- * implements it. The last test already passes and runs now: a get from
- * work the factory started, made after its run settled, is not
- * re-entrant and serves the item.
+ * Packet P5 implemented the rule, so every test runs and passes. The
+ * last test pins the other side of it: a get from work the factory
+ * started, made after its run settled, is not re-entrant and serves the
+ * item.
  *
  * No test here can hang on a registry without the rule. Each one either
  * stops its own loop after a fixed number of runs or checks the outcome

@@ -2,8 +2,8 @@
  * The package's public entry points, imported by name as a consumer
  * imports them, through the `exports` map in package.json.
  *
- * The second test carries `skip` until packet P5 adds
- * `ReentrantGetError`.
+ * The second test pins the `ReentrantGetError` export that packet P5
+ * added.
  */
 
 import { test } from 'node:test';
