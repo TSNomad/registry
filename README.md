@@ -37,9 +37,18 @@ with these differences:
   overwrites. Use `replace` to overwrite.
 - `getAll` answers the items in key order. `getAllEntries` answers the
   record keyed by id, as PHPNomad's `getAll` does.
+- PHPNomad's registry is three traits over an array of objects. Here
+  it is one `Registry<T>` class, and an item may be any type.
+- A factory must not read its own key. Until the pending re-entrant
+  rule lands, such a get waits forever, and a factory that replaces
+  its own key and then gets it loops and pins the CPU. With the rule,
+  each of these rejects with a `ReentrantGetError` that names the keys.
+  The rule uses `AsyncLocalStorage` from `node:async_hooks`, so the
+  registry then needs Node, Deno or Bun.
 
-Only the promises are forced by TypeScript. The other three keep 0.1
-behavior for current consumers and are open gaps under
+The promises and the one class are forced by TypeScript. The missing
+id, the duplicate set and the `getAll` shape keep 0.1 behavior for
+current consumers and are open gaps under
 [TS Nomad Alignment With PHPNomad (Charter 5012)](https://navigator.novatori.us/r/charter/5012),
 to close in a breaking release.
 

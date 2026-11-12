@@ -2,8 +2,8 @@
  * Acceptance tests: the Registry through PHPNomad's `CanGet`, `CanSet`
  * and `CanDelete`, and the 0.1 behavior every consumer relies on.
  *
- * Packet P2 removes each `skip`. The tests that already pass on the 0.1
- * code run now.
+ * Packet P2 implemented these and removed their `skip`, so every test
+ * here runs. The tests that passed on the 0.1 code ran from the start.
  */
 
 import { test } from 'node:test';

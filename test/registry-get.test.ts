@@ -1,11 +1,13 @@
 /**
  * Acceptance tests: how `Registry.get` builds and caches an item. One
  * factory run per entry, under concurrent gets too, any answer cached,
- * null included, no failure cached, and a run never landing on an entry
- * that replaced the one that started it.
+ * null included, no failure cached, and a run never storing its result
+ * on an entry that replaced the one that started it.
  *
- * Packet P2 removes each `skip`. The tests that already pass on the 0.1
- * code run now.
+ * Packet P2 implemented these and removed their `skip`, so every test
+ * here runs. The tests that passed on the 0.1 code ran from the start.
+ * A get of a key from inside its own factory run is covered in
+ * `registry-reentrant-get.test.ts`.
  */
 
 import { test } from 'node:test';
