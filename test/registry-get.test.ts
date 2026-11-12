@@ -56,7 +56,7 @@ test('the factory does not run until the key is read, and runs once for later re
   assert.equal(runs, 1);
 });
 
-test.skip('concurrent first gets share one factory run and receive the same item', async () => {
+test('concurrent first gets share one factory run and receive the same item', async () => {
   const registry = new Registry<object>();
   const { state, factory } = gated(() => ({}));
   registry.set('claude', factory);
@@ -71,7 +71,7 @@ test.skip('concurrent first gets share one factory run and receive the same item
   assert.equal(b, c);
 });
 
-test.skip('a factory that answers null or undefined runs once, and the answer is served after', async () => {
+test('a factory that answers null or undefined runs once, and the answer is served after', async () => {
   for (const answer of [null, undefined]) {
     const registry = new Registry<object | null | undefined>();
     let runs = 0;
@@ -102,7 +102,7 @@ test('a factory that throws caches nothing, and the next get runs it again', asy
   assert.equal(runs, 2);
 });
 
-test.skip('every get waiting on a failed run gets its error, and the run is not repeated for them', async () => {
+test('every get waiting on a failed run gets its error, and the run is not repeated for them', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'never');
   registry.set('flaky', factory);
@@ -188,7 +188,7 @@ test('a key nothing is set under rejects with KeyNotFoundError naming the availa
   });
 });
 
-test.skip('getAll builds each item once, in the order keys were set, sharing runs with gets in flight', async () => {
+test('getAll builds each item once, in the order keys were set, sharing runs with gets in flight', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'b');
   registry.set('a', () => 'a');
@@ -204,7 +204,7 @@ test.skip('getAll builds each item once, in the order keys were set, sharing run
   assert.equal(state.runs, 1);
 });
 
-test.skip('getAllEntries builds each item once, keyed by id, sharing runs with gets in flight', async () => {
+test('getAllEntries builds each item once, keyed by id, sharing runs with gets in flight', async () => {
   const registry = new Registry<string>();
   const { state, factory } = gated(() => 'b');
   registry.set('a', () => 'a');

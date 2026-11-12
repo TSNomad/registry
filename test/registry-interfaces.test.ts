@@ -23,7 +23,7 @@ test('a value set through CanSet is read back through CanGet', async () => {
   assert.deepEqual(await reader.getAll(), ['c', 'x']);
 });
 
-test.skip('getKeys lists every key in the order it was set, as keys() does', () => {
+test('getKeys lists every key in the order it was set, as keys() does', () => {
   const registry = new Registry<string>();
   const reader: CanGet<string> = registry;
   assert.deepEqual(reader.getKeys(), []);

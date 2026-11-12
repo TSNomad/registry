@@ -29,6 +29,16 @@ interface RegistryEntry<T> {
   factory: ItemFactory<T>;
   instance: T | null;
   metadata: ItemMetadata;
+  /**
+   * True once the factory has answered. The answer may be null or
+   * undefined, so `instance` alone cannot tell a built entry apart.
+   */
+  built?: boolean;
+  /**
+   * The factory run in flight, shared by every get that arrives before
+   * it settles. Cleared when the run settles.
+   */
+  pending?: Promise<T>;
 }
 
 /**
@@ -107,9 +117,10 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    * - A factory must not get its own key, directly or through another
    *   key's factory. That get waits on its own run and never settles.
    *
-   * Stub: the body is 0.1's, which runs the factory again for
-   * concurrent first gets and for a null item. Packet P2 brings it to
-   * the contract above.
+   * Each entry object keeps its own run and its own built flag.
+   * `set` and `replace` store a new entry object, and `delete` and
+   * `clear` drop the old one, so a run in flight writes only to the
+   * entry that started it.
    *
    * @param key - The item key
    * @returns Promise resolving to the item
@@ -122,16 +133,39 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
       throw new KeyNotFoundError(key, this.keys());
     }
 
-    // Return cached instance if available
-    if (entry.instance !== null) {
-      return entry.instance;
+    if (entry.built) {
+      return entry.instance as T;
     }
 
-    // Instantiate and cache
-    const instance = await entry.factory();
-    entry.instance = instance;
+    if (!entry.pending) {
+      entry.pending = this.build(entry);
+    }
 
-    return instance;
+    return entry.pending;
+  }
+
+  /**
+   * Runs an entry's factory once and settles the entry from the result.
+   * A success stores the item and marks the entry built. A failure
+   * stores nothing and clears the run, so the next get starts a new one.
+   * A factory that throws synchronously rejects like one that rejects.
+   *
+   * @param entry - The entry that owns this run
+   * @returns Promise resolving to the item
+   */
+  private build(entry: RegistryEntry<T>): Promise<T> {
+    return (async () => entry.factory())().then(
+      (item) => {
+        entry.instance = item;
+        entry.built = true;
+        entry.pending = undefined;
+        return item;
+      },
+      (error: unknown) => {
+        entry.pending = undefined;
+        throw error;
+      }
+    );
   }
 
   /**
@@ -157,12 +191,10 @@ export class Registry<T> implements CanGet<T>, CanSet<T>, CanDelete {
    * Gets every key, in the order they were set. PHPNomad's name for
    * `keys()`.
    *
-   * Stub: packet P2 implements it.
-   *
    * @returns Array of key strings
    */
   getKeys(): string[] {
-    return [];
+    return this.keys();
   }
 
   /**
