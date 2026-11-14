@@ -1,0 +1,29 @@
+mutations in ncc-s07-b-registry, tests in ncc-s07-b-registry
+baseline exit=0
+C1-must-catch: getKeys answers nothing: KILLED exit=1 expect=killed OK
+    ✖ getKeys lists every key in the order it was set, as keys() does
+C2-must-survive: comment only: SURVIVED exit=0 expect=survive OK
+C3-must-refuse: syntax break: REFUSED (build failed: src/Registry.ts(379,4): error TS1068: Unexpected token. A constructor, method, accessor, or property was expected. | src/Registry.ts(384,10): error TS1005: ')' expected.)  expect=refuse
+S1 delete keeps an entry whose run is in flight: KILLED exit=1 expect=killed OK
+    ✖ delete during a run: the run never stores its result on an entry set later under the same key
+S2 clear resets entries in place instead of dropping them: KILLED exit=1 expect=killed OK
+    ✖ clear during a run: the run never stores its result on an entry set later under the same key
+S3 replace rewrites the entry in place, so a run in flight writes to the new one: KILLED exit=1 expect=killed OK
+    ✖ a get from inside a run is re-entrant even when an outside get has since built the key
+    ✖ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory
+S4 a failed run marks the entry built: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that throws caches nothing, and the next get runs it again
+    ✖ a factory that throws synchronously rejects every concurrent get from one run, and the next get runs it again
+    ✖ a run that fails is marked settled, so a get from work its factory started runs the factory again
+S5 the entry is marked built before the factory answers: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that throws caches nothing, and the next get runs it again
+    ✖ a factory that throws synchronously rejects every concurrent get from one run, and the next get runs it again
+    ✖ a run that fails is marked settled, so a get from work its factory started runs the factory again
+    ✖ concurrent first gets share one factory run and receive the same item
+    ✖ every get waiting on a failed run gets its error, and the run is not repeated for them
+    ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
+    ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
+    ✖ the factory starts one microtask after get stores its run, so a get made before it starts shares the run
+mismatches=0

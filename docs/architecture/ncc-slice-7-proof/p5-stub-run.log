@@ -1,0 +1,116 @@
+
+> @tsnomad/registry@0.1.0 pretest
+> npm run build
+
+
+> @tsnomad/registry@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @tsnomad/registry@0.1.0 test
+> node --test
+
+✔ the package root exports the registry and its errors (2.685139ms)
+✖ the package root and the errors entry export ReentrantGetError, a RegistryError (1.617249ms)
+✔ a factory that throws synchronously rejects every concurrent get from one run, and the next get runs it again (4.236619ms)
+✔ a factory that gets its own key synchronously runs once, and that get waits on its own run (8.004218ms)
+✔ the factory does not run until the key is read, and runs once for later reads (2.93427ms)
+✔ concurrent first gets share one factory run and receive the same item (14.822298ms)
+✔ a factory that answers null or undefined runs once, and the answer is served after (1.080721ms)
+✔ a factory that throws caches nothing, and the next get runs it again (2.265249ms)
+✔ every get waiting on a failed run gets its error, and the run is not repeated for them (2.716169ms)
+✔ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory (1.522488ms)
+✔ delete during a run: the run never stores its result on an entry set later under the same key (1.386223ms)
+✔ clear during a run: the run never stores its result on an entry set later under the same key (1.155625ms)
+✔ a get that started before replace and fails does not stop the new entry from building (1.097586ms)
+✔ a key nothing is set under rejects with KeyNotFoundError naming the available keys (2.548753ms)
+✔ getAll builds each item once, in the order keys were set, sharing runs with gets in flight (2.468039ms)
+✔ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight (1.494775ms)
+✔ getAll and getAllEntries reject with the error of the first key whose factory fails, in key order (0.767446ms)
+✔ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError (2.837372ms)
+✔ a value set through CanSet is read back through CanGet (3.717807ms)
+✔ getKeys lists every key in the order it was set, as keys() does (0.410661ms)
+✔ CanDelete removes the item, and deleting a missing id does nothing (0.292118ms)
+✔ setting a key twice throws DuplicateKeyError, and replace replaces on purpose (1.176601ms)
+✔ metadata, tags and priority stay as 0.1 has them (0.864549ms)
+✔ getAllEntries answers the record keyed by id, as PHPNomad getAll does (0.520702ms)
+✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run (5.41408ms)
+✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run (13.201016ms)
+✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path (3.863149ms)
+✔ a get from work the factory started, made after its run settled, serves the item (2.311784ms)
+✔ test/registry-type-safety.ts (128.157549ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 25
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 288.770819
+
+✖ failing tests:
+
+test at test/package-exports.test.ts:26:1
+✖ the package root and the errors entry export ReentrantGetError, a RegistryError (1.617249ms)
+  AssertionError [ERR_ASSERTION]: ReentrantGetError is not exported from the root
+      at TestContext.<anonymous> (file://<proof-clone>/test/package-exports.test.ts:28:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/registry-reentrant-get.test.ts:60:1
+✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run (5.41408ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file://<proof-clone>/test/registry-reentrant-get.test.ts:74:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test/registry-reentrant-get.test.ts:84:1
+✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run (13.201016ms)
+  AssertionError [ERR_ASSERTION]: synchronously: the get is still pending
+  + actual - expected
+  
+  + 'pending'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (file://<proof-clone>/test/registry-reentrant-get.test.ts:106:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/registry-reentrant-get.test.ts:112:1
+✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path (3.863149ms)
+  AssertionError [ERR_ASSERTION]: the get is still pending
+  + actual - expected
+  
+  + 'pending'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (file://<proof-clone>/test/registry-reentrant-get.test.ts:122:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

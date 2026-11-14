@@ -26,6 +26,18 @@
     "./errors": {
       "types": "./dist/errors.d.ts",
       "default": "./dist/errors.js"
+    },
+    "./can-get": {
+      "types": "./dist/CanGet.d.ts",
+      "default": "./dist/CanGet.js"
+    },
+    "./can-set": {
+      "types": "./dist/CanSet.d.ts",
+      "default": "./dist/CanSet.js"
+    },
+    "./can-delete": {
+      "types": "./dist/CanDelete.d.ts",
+      "default": "./dist/CanDelete.js"
     }
   },
   "files": [
@@ -36,8 +48,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "pretypecheck": "npm run build",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "pretest": "npm run build",
+    "test": "node --test"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
