@@ -1,0 +1,40 @@
+mutations in ncc-s07-arch2-proof-registry, tests in ncc-s07-arch2-proof-registry
+baseline exit=0
+C1-must-catch: the item is never stored: KILLED exit=1 expect=killed OK
+    ✖ a factory that answers null or undefined runs once, and the answer is served after
+    ✖ a get from work the factory started, made after its run settled, serves the item
+    ✖ a value set through CanSet is read back through CanGet
+    ✖ the factory does not run until the key is read, and runs once for later reads
+C2-must-survive: comment only: SURVIVED exit=0 expect=survive OK
+C3-must-refuse: syntax break: REFUSED (build failed: src/Registry.ts(150,10): error TS1359: Identifier expected. 'const' is a reserved word that cannot be used here. | src/Registry.ts(150,16): error TS1005: ',' expected.)  expect=refuse
+P5-1 no re-entrant check at all: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-2 only the innermost run is checked, so a cycle through another key is missed: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+P5-3 a settled run still counts, so later work the factory started is refused: KILLED exit=1 expect=killed OK
+    ✖ a get from work the factory started, made after its run settled, serves the item
+P5-4 factories run outside the run context: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-5 a run never marks itself settled on success: KILLED exit=1 expect=killed OK
+    ✖ a get from work the factory started, made after its run settled, serves the item
+P5-6 the path leaves out the runs that led back: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-7 the error is a KeyNotFoundError: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-8 the error has another name: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+    ✖ a factory that gets its own key rejects with a ReentrantGetError instead of waiting on its own run
+    ✖ a factory that replaces its own key and then gets it rejects with a ReentrantGetError, after one run
+P5-9 the message does not name the path: KILLED exit=1 expect=killed OK
+    ✖ a cycle through another key's factory rejects with a ReentrantGetError naming the path
+P5-10 the root does not export the error: KILLED exit=1 expect=killed OK
+    ✖ the package root and the errors entry export ReentrantGetError, a RegistryError
+mismatches=0

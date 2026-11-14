@@ -1,0 +1,24 @@
+mutations in ncc-s07-review-registry, tests in ncc-s07-review-registry
+baseline exit=0
+C1-must-catch: get answers undefined: KILLED exit=1 expect=killed OK
+    ✖ a factory that answers null or undefined runs once, and the answer is served after
+    ✖ a factory that gets its own key synchronously runs once, and that get waits on its own run
+    ✖ a factory that throws caches nothing, and the next get runs it again
+    ✖ a factory that throws synchronously rejects every concurrent get from one run, and the next get runs it again
+    ✖ a get that started before replace and fails does not stop the new entry from building
+    ✖ a value set through CanSet is read back through CanGet
+    ✖ clear during a run: the run never stores its result on an entry set later under the same key
+    ✖ delete during a run: the run never stores its result on an entry set later under the same key
+    ✖ every get waiting on a failed run gets its error, and the run is not repeated for them
+    ✖ getAll and getAllEntries read the keys set when they start, and a key deleted before its turn rejects with KeyNotFoundError
+    ✖ getAll and getAllEntries reject with the error of the first key whose factory fails, in key order
+    ✖ getAll builds each item once, in the order keys were set, sharing runs with gets in flight
+    ✖ getAllEntries answers the record keyed by id, as PHPNomad getAll does
+    ✖ getAllEntries builds each item once, keyed by id, sharing runs with gets in flight
+    ✖ replace during a run: the old run never stores its result on the new entry, and the next get runs the new factory
+    ✖ setting a key twice throws DuplicateKeyError, and replace replaces on purpose
+C2-must-survive: comment only: SURVIVED exit=0 expect=survive OK
+C3-must-refuse: syntax break: REFUSED (build failed: src/Registry.ts(173,6): error TS1005: ')' expected.)  expect=refuse
+F1 the factory starts before get stores the run, as at 909fcaf: KILLED exit=1 expect=killed OK
+    ✖ a factory that gets its own key synchronously runs once, and that get waits on its own run
+mismatches=0

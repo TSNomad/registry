@@ -1,0 +1,14 @@
+baseline typecheck exit=0 errors=0 directives=4
+TC1-must-catch: factories build anything: KILLED unused=[28] expect=[28] OK
+    unused: a factory must build the registry's item type
+TC2-must-survive: comment only: SURVIVED expect=survive OK
+TC3-must-refuse: syntax break: REFUSED (other errors: [('src/CanDelete.ts', '10', 'TS1109'), ('src/CanDelete.ts', '11', 'TS1005')])  expect=refuse
+TS1 set takes the item itself: KILLED unused=[31] expect=[31] OK
+    unused: CanSet takes a factory, not the item itself
+TG1 get answers anything: KILLED unused=[34] expect=[34] OK
+    unused: get answers a promise of the item
+TG2 CanGet ignores its item type: KILLED unused=[38] expect=[38] OK
+    unused: a registry of one item type is not a reader of another
+restored typecheck exit=0
+directives never left unused: none
+mismatches=0
