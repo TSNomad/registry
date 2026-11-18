@@ -4,6 +4,10 @@
   "description": "Registry for lazy loaded named collections, the TypeScript counterpart to PHPNomad's registry package",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://github.com/tsnomad/registry#readme",
+  "bugs": {
+    "url": "https://github.com/tsnomad/registry/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tsnomad/registry.git"
@@ -46,9 +50,13 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build",
+    "prepack": "npm run build",
     "pretypecheck": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "pretest": "npm run build",
